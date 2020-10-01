@@ -1,0 +1,88 @@
+---
+title: "SVC"
+author: "Sofia Loizou"
+date: "17/09/2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(here)
+library(kableExtra)
+library(mice)
+library(readxl)
+library(stringr)
+library(tidyverse)
+```
+
+
+
+```{r helper_functions}
+convert_var_names <- function(tibble){
+  tib <- tibble %>% 
+    dplyr::rename_with(~gsub(" ", "", .)) %>% 
+    dplyr::rename_with(~gsub("_","", .)) %>% 
+    dplyr::rename_with(~gsub("\\(|\\)", "", .)) %>%
+    dplyr::rename_with(~gsub("(T)([0])", "", .)) %>%
+    dplyr::rename_with(tolower)
+    return(tib)
+}
+
+
+vars_renamed <- function(tibble){
+  tib <- tibble %>% 
+    convert_var_names() %>% 
+    dplyr::rename(
+      educatio = education,
+      maritals = marital,
+      studyid = id,
+    ) 
+  return(tib)
+}
+
+add_category_labels <- function(tibble){
+  tib <- tibble %>% 
+    dplyr::mutate(
+      gender = factor(gender, levels = 0:333, labels = c("Male", "Female", "Another term", "Prefer not to say", )),
+      marital = factor(marital, levels = 1:6, labels = c("Single", "Cohabit", "Married/Civil Partnership", "sep/div", "long-term relationship")),
+      employment = factor(employment, levels = 1:13, labels = c("FT paid", "PT paid", "FT vol", "PT vol", "unemp benefits", "unemp NO benefits (old booklet)", "student", "retired", "self-emp", "home-maker", "other", "employed/self employed (new blooklet)", "unemployed(new booklet)")), 
+      education = factor(education, levels = 1:5, labels = c("left school<16", "left school@16", "left school@17/18", "college", "uni")),
+      confdiag = factor(confdiag, levels = 0:8 , labels = c("None found", "schizophrenia", "schizoaffective", "BPD/EUPD", "PTSD", "Complex trauma", "Depression", "mixed", "other")),
+      firstlang = factor(firstlang, levels = 1:11 , labels = c("English", "Spanish", "Polish", "Greek", "Urdu", "Bulgarian", "German", "Farsi", "French", "Indonesian", "Other")),
+      ethnicity = factor(ethnicity, levels = 1:333, labels = c("WB", "white other", "Asian", "black", "Chinese", "mixed", "other", "prefer not to say")),
+      trust_code = factor(trust_code)
+    )
+}
+
+import_data <- function(path){
+  dat <- readxl::read_excel(path, sheet = 1) %>%
+    dplyr::mutate(
+      time = extract_time_from_filename(path)
+    ) %>%
+    vars_renamed(.)
+  
+  return(dat)
+}
+
+
+get_file_list <- function(path = "phd_data_analysis", regex_match = "xlsx"){
+  file_list <- here::here(path) %>% 
+    list.files(., full.names = TRUE, pattern = regex_match)
+  
+  return(file_list)
+}
+
+```
+
+```{r}
+ms_tib <- get_file_list()
+```
+
+
+```{r}
+ms_tib
+```
+
+
